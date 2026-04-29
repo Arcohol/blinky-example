@@ -3,8 +3,13 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
 
+    # Used by zephyr-nix to make a specific python environment for zephyr.
+    zephyr.url = "github:zephyrproject-rtos/zephyr/v4.4.0";
+    zephyr.flake = false;
+
     zephyr-nix.url = "github:nix-community/zephyr-nix";
     zephyr-nix.inputs.nixpkgs.follows = "nixpkgs";
+    zephyr-nix.inputs.zephyr.follows = "zephyr";
   };
 
   outputs =
@@ -28,11 +33,8 @@
           };
         };
         zephyr = zephyr-nix.packages.${system};
-        zephyr-sdk = (
-          zephyr.sdk.override {
-            targets = [ "arm-zephyr-eabi" ];
-          }
-        );
+        zephyr-sdk = zephyr.sdk-1_0.override { targets = [ "arm-zephyr-eabi" ]; };
+        zephyr-pythonEnv = zephyr.pythonEnv;
       in
       {
         devShells.default = pkgs.mkShell {
@@ -44,7 +46,7 @@
             segger-jlink
             (nrfutil.withExtensions [ "nrfutil-device" ])
             zephyr-sdk
-            zephyr.pythonEnv
+            zephyr-pythonEnv
           ];
 
           shellHook = ''
